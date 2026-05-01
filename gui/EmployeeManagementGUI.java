@@ -7,11 +7,15 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * EmployeeManagementGUI: The main user interface class.
+ * It connects the DAO (Data) with the Swing components (UI).
+ */
 public class EmployeeManagementGUI extends JFrame {
-    // Data Access Object
+    // DAO instance: Connects the GUI to the SQLite database logic.
     private final EmployeeDAO dao = new SQLiteEmployeeDAO();
 
-    // Input Fields
+    // UI Components for data entry and display.
     private final JTextField txtId = new JTextField();
     private final JTextField txtName = new JTextField();
     private final JTextField txtDept = new JTextField();
@@ -19,31 +23,30 @@ public class EmployeeManagementGUI extends JFrame {
     private final JTextField txtHours = new JTextField();
     private final JComboBox<String> cmbType = new JComboBox<>(new String[]{"Full-Time", "Part-Time", "Intern"});
     
-    // Table Components
     private DefaultTableModel model;
     private JTable table;
     private final JPanel cards = new JPanel(new CardLayout());
     private final JLabel lblStatus = new JLabel("No Employees Found", SwingConstants.CENTER);
 
-    // Color Palette
-    private final Color primaryColor = new Color(70, 130, 180); // Steel Blue
+    // Visual Styling constants.
+    private final Color primaryColor = new Color(70, 130, 180); 
     private final Color backgroundColor = new Color(245, 247, 250);
-    private final Color dangerColor = new Color(220, 53, 69); // Red for Delete
+    private final Color dangerColor = new Color(220, 53, 69); 
 
     public EmployeeManagementGUI() {
         super("Employee Management System");
         
-        // 1. Window Setup
+        // Window Layout configuration.
         setLayout(new BorderLayout(0, 0));
         setPreferredSize(new Dimension(850, 750));
         setResizable(false);
 
-        // 2. Add UI Sections
+        // Assemble the three main UI regions.
         add(buildForm(), BorderLayout.NORTH);
         add(buildTableArea(), BorderLayout.CENTER);
         add(buildActions(), BorderLayout.SOUTH);
 
-        // 3. Logic: Enable/Disable Hours based on type
+        // Conditional UI Logic: Only enable Hours field if 'Part-Time' is selected.
         cmbType.addActionListener(e -> {
             boolean isPT = cmbType.getSelectedItem().equals("Part-Time");
             txtHours.setEnabled(isPT);
@@ -52,15 +55,17 @@ public class EmployeeManagementGUI extends JFrame {
         txtHours.setEnabled(false);
         txtHours.setBackground(new Color(230, 230, 230));
 
-        // 4. Finalize
         pack();
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         
-        // Load initial data
+        // Load stored data into the table upon startup.
         refreshTable();
     }
 
+    /**
+     * buildForm(): Creates the top input section using a Grid layout.
+     */
     private JPanel buildForm() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
@@ -93,6 +98,9 @@ public class EmployeeManagementGUI extends JFrame {
         return header;
     }
 
+    /**
+     * createInputGroup(): Helper to create a labeled input field.
+     */
     private JPanel createInputGroup(String title, JComponent field, Font font) {
         JPanel p = new JPanel(new BorderLayout(0, 5));
         p.setOpaque(false);
@@ -110,12 +118,15 @@ public class EmployeeManagementGUI extends JFrame {
         return p;
     }
 
+    /**
+     * buildTableArea(): Sets up the JTable and CardLayout for switching between data and empty views.
+     */
     private JPanel buildTableArea() {
         String[] cols = {"ID", "NAME", "TYPE", "DEPT", "NET SALARY"};
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make table rows non-editable directly
+                return false; 
             }
         };
         table = new JTable(model);
@@ -123,7 +134,7 @@ public class EmployeeManagementGUI extends JFrame {
         table.getTableHeader().setBackground(primaryColor);
         table.getTableHeader().setForeground(Color.WHITE);
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Only allow one row selected at a time
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); 
 
         lblStatus.setFont(new Font("Segoe UI Light", Font.ITALIC, 24));
         lblStatus.setForeground(Color.GRAY);
@@ -134,6 +145,9 @@ public class EmployeeManagementGUI extends JFrame {
         return cards;
     }
 
+    /**
+     * buildActions(): Creates buttons for manual refresh and data deletion.
+     */
     private JPanel buildActions() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         p.setBackground(backgroundColor);
@@ -152,12 +166,16 @@ public class EmployeeManagementGUI extends JFrame {
         return p;
     }
 
+    /**
+     * addEmp(): Logic to instantiate the correct Employee subclass based on UI selection.
+     */
     private void addEmp() {
         try {
             String type = (String) cmbType.getSelectedItem();
             Employee e;
             Department d = new Department(txtDept.getText());
             
+            // Polymorphism in action: instantiate different types based on user choice.
             if ("Part-Time".equals(type)) {
                 e = new PartTimeEmployee(txtId.getText(), txtName.getText(), null, 
                     d, Double.parseDouble(txtSalary.getText()), 
@@ -170,7 +188,7 @@ public class EmployeeManagementGUI extends JFrame {
                     d, Double.parseDouble(txtSalary.getText()));
             }
             
-            dao.add(e);
+            dao.add(e); // Save to database.
             JOptionPane.showMessageDialog(this, "Employee Added Successfully!");
             refreshTable();
             clearFields();
@@ -179,6 +197,9 @@ public class EmployeeManagementGUI extends JFrame {
         }
     }
 
+    /**
+     * deleteSelectedEmp(): Handles row selection validation and database removal.
+     */
     private void deleteSelectedEmp() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) {
@@ -186,7 +207,6 @@ public class EmployeeManagementGUI extends JFrame {
             return;
         }
 
-        // Get ID from the first column (ID)
         String id = (String) model.getValueAt(selectedRow, 0);
         String name = (String) model.getValueAt(selectedRow, 1);
 
@@ -201,6 +221,9 @@ public class EmployeeManagementGUI extends JFrame {
         }
     }
 
+    /**
+     * refreshTable(): Syncs the JTable display with the current state of the database.
+     */
     private void refreshTable() {
         List<Employee> list = dao.getAll();
         model.setRowCount(0); 
@@ -225,6 +248,9 @@ public class EmployeeManagementGUI extends JFrame {
         cards.repaint();
     }
 
+    /**
+     * clearFields(): Utility to reset the form after a successful operation.
+     */
     private void clearFields() {
         txtId.setText(""); txtName.setText(""); txtDept.setText("");
         txtSalary.setText(""); txtHours.setText("");

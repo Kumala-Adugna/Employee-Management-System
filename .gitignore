@@ -1,3 +1,46 @@
 lib/
 db/
 *.class
+
+# EXTERNAL LIBRARIES (lib folder)
+
+# sqlite-jdbc-3.45.3.0.jar
+# Function: Serves as the Database Driver required to establish a connection 
+#           between Java and SQLite.
+# Usage: Enables the SQLiteEmployeeDAO class to communicate with the .db file. 
+#        It handles the translation of Java SQL commands into a format the 
+#        SQLite engine understands.
+
+# slf4j-api-2.0.9.jar & slf4j-simple-2.0.9.jar
+# Function: These are Logging Framework components.
+# Usage: Used by the database driver to output internal messages, warnings, or 
+#        errors to the console. They facilitate background debugging and system 
+#        monitoring without requiring manual print statements in the source code.
+
+
+
+# PROJECT CONFIGURATION FILES
+
+# .gitignore
+# Function:A version control configuration file for Git.
+# Usage: Specifies which files and directories should be excluded from the 
+#        repository. In this project, it prevents the local db/ems.db file 
+#        from being uploaded, ensuring that local database changes do not 
+#        conflict with other members of the development team during code sharing.
+
+
+
+###############################################################################
+# DATABASE FILE: db/ems.db
+
+
+# ems.db
+# Function: A relational database file managed by the SQLite engine.
+# Usage: It serves as the persistent storage layer for the entire application. 
+#        Unlike temporary memory (RAM), this file stores employee records 
+#        (ID, Name, Type, Department, Salary) permanently on the hard drive. 
+#        This ensures that data is not lost when the Java application is closed 
+#        or the computer is restarted.
+#
+# Technical Detail: The SQLite driver reads and writes to this file using 
+#                   Standard SQL queries initiated by the SQLiteEmployeeDAO class.

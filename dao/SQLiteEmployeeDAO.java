@@ -5,14 +5,25 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * SQLiteEmployeeDAO: Implements the EmployeeDAO interface using SQLite.
+ * It handles all CRUD (Create, Read, Update, Delete) operations for the database.
+ */
 public class SQLiteEmployeeDAO implements EmployeeDAO {
-    private final String URL = "jdbc:sqlite:/home/kumala-adugna/Employee Management System/db/ems.db";
+    // Database connection string using a relative path for portability.
+    private final String URL = "jdbc:sqlite:db/ems.db";
 
+    /**
+     * Constructor: Initializes the database, loads the driver, 
+     * and creates the employees table if it doesn't already exist.
+     */
     public SQLiteEmployeeDAO() {
         try {
+            // Load the JDBC driver and ensure the database directory exists.
             Class.forName("org.sqlite.JDBC");
-            new java.io.File("/home/kumala-adugna/Employee Management System/db").mkdirs();
+            new java.io.File("db").mkdirs();
             
+            // Connection block to initialize the table structure.
             try (Connection conn = DriverManager.getConnection(URL)) {
                 String sql = "CREATE TABLE IF NOT EXISTS employees (" +
                              "id TEXT PRIMARY KEY, " +
@@ -29,6 +40,10 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
         }
     }
 
+    /**
+     * add(): Persists an Employee object into the database.
+     * Uses PreparedStatement to prevent SQL Injection attacks.
+     */
     @Override
     public void add(Employee e) {
         try (Connection conn = DriverManager.getConnection(URL);
@@ -46,6 +61,10 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
         }
     }
 
+    /**
+     * getAll(): Retrieves all records from the employees table 
+     * and converts them back into a List of Employee objects.
+     */
     @Override
     public List<Employee> getAll() {
         List<Employee> list = new ArrayList<>();
@@ -62,6 +81,9 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
         return list;
     }
 
+    /**
+     * delete(): Removes a specific employee record based on their unique ID.
+     */
     @Override
     public void delete(String id) {
         String sql = "DELETE FROM employees WHERE id = ?";
@@ -74,6 +96,9 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
         }
     }
 
+    /**
+     * findById(): Searches for a single employee record by ID.
+     */
     @Override 
     public Employee findById(String id) {
         String sql = "SELECT * FROM employees WHERE id = ?";
@@ -91,7 +116,10 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
         return null;
     }
 
-    // Helper method to avoid duplicating logic in getAll and findById
+    /**
+     * mapResultSetToEmployee(): A helper method that converts a Database Row (ResultSet)
+     * back into the appropriate Java Object (Polymorphism).
+     */
     private Employee mapResultSetToEmployee(ResultSet rs) throws SQLException {
         String type = rs.getString("type");
         Department d = new Department(rs.getString("dept"));
@@ -99,6 +127,7 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
         String name = rs.getString("name");
         double salary = rs.getDouble("salary");
 
+        // Logic to determine which specific subclass to instantiate.
         if ("Part-Time".equalsIgnoreCase(type)) {
             return new PartTimeEmployee(id, name, null, d, salary, 0);
         } else if ("Intern".equalsIgnoreCase(type)) {
