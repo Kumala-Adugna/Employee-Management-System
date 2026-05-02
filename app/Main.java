@@ -1,3 +1,17 @@
+/*
+ * PROJECT: EMPLOYEE MANAGEMENT SYSTEM (EMS)
+ * UNIVERSITY: ADAMA SCIENCE AND TECHNOLOGY UNIVERSITY
+ * 
+ * GROUP MEMBERS:                         ID
+ * 1. Shimellis Regassa              Ugr/37774/17
+ * 2. Kumala Adugna                  Ugr/37298/17
+ * 3. Merga Adam                     Ugr/37391/17
+ * 4. Fedawak Hailu                  Ugr/36856/17
+ * 5. Midaga Buzuna                  Ugr/37416/17
+ * 
+ * INSTRUCTOR: Mr. Megersa Daraje
+ * DATE: May 2026
+ */
 package app;
 
 import gui.EmployeeManagementGUI;
