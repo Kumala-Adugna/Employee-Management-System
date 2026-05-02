@@ -17,29 +17,34 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
      * Constructor: Initializes the database, loads the driver, 
      * and creates the employees table if it doesn't already exist.
      */
-    public SQLiteEmployeeDAO() {
-        try {
-            // Load the JDBC driver and ensure the database directory exists.
-            Class.forName("org.sqlite.JDBC");
-            new java.io.File("db").mkdirs();
-            
-            // Connection block to initialize the table structure.
-            try (Connection conn = DriverManager.getConnection(URL)) {
-                String sql = "CREATE TABLE IF NOT EXISTS employees (" +
-                             "id TEXT PRIMARY KEY, " +
-                             "name TEXT, " +
-                             "type TEXT, " +
-                             "dept TEXT, " +
-                             "salary REAL)";
-                conn.createStatement().execute(sql);
-            }
-        } catch (ClassNotFoundException e) {
-            System.err.println("CRITICAL: SQLite Driver not found!");
-        } catch (SQLException e) {
-            System.err.println("Database Init Error: " + e.getMessage());
-        }
-    }
+  public SQLiteEmployeeDAO() {
+    try {
+        // Load the JDBC driver and ensure the database directory exists.
+        Class.forName("org.sqlite.JDBC");
+        new java.io.File("db").mkdirs();
+        
+        // Connection block to initialize the table structure.
+        try (Connection conn = DriverManager.getConnection(URL)) {
+            // 1. Existing table creation
+            String sql = "CREATE TABLE IF NOT EXISTS employees (" +
+                         "id TEXT PRIMARY KEY, " +
+                         "name TEXT, " +
+                         "type TEXT, " +
+                         "dept TEXT, " +
+                         "salary REAL)";
+            conn.createStatement().execute(sql);
 
+            // 2. NEW PERFORMANCE BOOST LINE:
+            // This ensures searching by name is instant among 10,000+ records.
+            conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_name ON employees(name)");
+            
+        }
+    } catch (ClassNotFoundException e) {
+        System.err.println("CRITICAL: SQLite Driver not found!");
+    } catch (SQLException e) {
+        System.err.println("Database Init Error: " + e.getMessage());
+    }
+}
     /**
      * add(): Persists an Employee object into the database.
      * Uses PreparedStatement to prevent SQL Injection attacks.
@@ -66,20 +71,23 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
      * and converts them back into a List of Employee objects.
      */
     @Override
-    public List<Employee> getAll() {
-        List<Employee> list = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(URL);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM employees")) {
-            
-            while (rs.next()) {
-                list.add(mapResultSetToEmployee(rs));
-            }
-        } catch (SQLException ex) { 
-            System.err.println("Select Error: " + ex.getMessage());
+public List<Employee> getAll() {
+    List<Employee> list = new ArrayList<>();
+    // The change is right here: adding the ORDER BY clause
+    String sql = "SELECT * FROM employees ORDER BY name ASC";
+    
+    try (Connection conn = DriverManager.getConnection(URL);
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            list.add(mapResultSetToEmployee(rs));
         }
-        return list;
+    } catch (SQLException ex) { 
+        System.err.println("Select Error: " + ex.getMessage());
     }
+    return list;
+}
 
     /**
      * delete(): Removes a specific employee record based on their unique ID.
@@ -136,4 +144,46 @@ public class SQLiteEmployeeDAO implements EmployeeDAO {
             return new FullTimeEmployee(id, name, null, d, salary);
         }
     }
+
+ @Override
+    public List<Employee> search(String query) {
+        List<Employee> list = new ArrayList<>();
+        // The SQL query now filters AND sorts at the same time
+        String sql = "SELECT * FROM employees WHERE id = ? OR name LIKE ? ORDER BY name ASC";
+        
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, query);             // Search for exact ID
+            pstmt.setString(2, "%" + query + "%"); // Search for Name containing query
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToEmployee(rs));
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("Search Error: " + ex.getMessage());
+        }
+        return list;
+    }
+
+@Override
+public void updateSalary(String id, double newSalary) {
+    String sql = "UPDATE employees SET salary = ? WHERE id = ?";
+    try (Connection conn = DriverManager.getConnection(URL);
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        
+        pstmt.setDouble(1, newSalary);
+        pstmt.setString(2, id);
+        
+        int affectedRows = pstmt.executeUpdate();
+        if (affectedRows > 0) {
+            System.out.println("Salary updated successfully for ID: " + id);
+        }
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+    }
+}
+
 }

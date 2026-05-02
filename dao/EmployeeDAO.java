@@ -24,9 +24,16 @@ public interface EmployeeDAO {
      * delete: Contract for removing a record based on its unique identifier.
      */
     void delete(String id);
+
+    void updateSalary(String id, double newSalary);
     
     /**
      * findById: Contract for searching for a specific record by its ID.
      */
     Employee findById(String id);
+    /**
+     * search: Contract for searching employee records based on a query string.
+     * This allows for flexible searching across multiple fields (e.g., name, department).
+     */
+    List<Employee> search(String query);
 }
