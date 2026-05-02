@@ -1,89 +1,211 @@
-# Employee Management System
+Employee Management System (EMS) Documentation
+1. Project Summary
 
-A professional Java Swing application for managing employee data using an SQLite database, built with a focus on modular architecture and clean Object-Oriented Programming (OOP) principles.
+    Project Title: Employee Management System (EMS)
 
-## 🚀 Getting Started for the Team
+    University: Adama Science and Technology University (ASTU)
 
-Since the project libraries and local database are excluded from this repository for performance and collaboration safety, follow these steps to get the app running:
+    Group Members:
 
-### 1. Prerequisites
-*   Ensure you have **Java 17** (JDK) or higher installed.
-*   Make sure the **Language Support for Java** extension is installed in VS Code.
+        Shimellis Regassa — Ugr/37774/17
 
-### 2. Setup Libraries
-1.  Obtain the `lib/` folder containing the 3 JAR files (JDBC and SLF4J) from the team lead.
-2.  In VS Code, go to the **Java Projects** view (bottom of the sidebar).
-3.  Click the **+** icon next to **Referenced Libraries**.
-4.  Select all three JAR files inside the `lib/` folder:
-    *   `sqlite-jdbc-3.45.3.0.jar`
-    *   `slf4j-api-2.0.9.jar`
-    *   `slf4j-simple-2.0.9.jar`
+        Kumala Adugna — Ugr/37298/17
 
-### 3. Database Initialization
-The application is configured to use a relative path (`db/ems.db`). The first time you run the program, the SQLite driver will automatically create the database file if it doesn't exist.
+        Merga Adam — Ugr/37391/17
 
----
+        Fedawak Hailu — Ugr/36856/17
 
-## 👥 Team Information: G1
-*   **Kumala Adugna**
-*   **Shimellis Regassa**
-*   **Merga Adam**
-*   **Fedawak Hailu**
-*   **Midaga Buzuna**
+        Midaga Buzuna — Ugr/37416/17
 
-**Date:** May 2026  
-**Version:** 1.0.0
+    Instructor: Mr. Megersa Daraje
 
----
+    Version: 1.1.0 (High-Capacity Data Handling)
 
-## 🛠️ Project Structure & Architecture
-The project is logically partitioned into **Packages** to ensure high cohesion and low coupling.
+2. Objective
 
-*   `app/`: Contains the `Main` entry point.
-*   `dao/`: Data Access Object logic for SQLite (Separates SQL from UI).
-*   `gui/`: Swing-based user interface (The View layer).
-*   `employee/`: Logic for employee models, categories, and attributes.
-*   `interfaces/`: Shared project contracts and standards.
+The EMS is a Java-based application designed to demonstrate mastery of robust software architecture and Object-Oriented Programming (OOP) principles. It efficiently manages multiple employee types—including Full-Time, Part-Time, and Interns—while performing critical business tasks such as salary calculation and record persistence. The system is engineered for stability and specifically optimized to maintain high performance when managing extensive datasets.
+3. Technical Stack
 
----
+    Language: Java 17
 
-## 🧩 Core OOP Concepts Applied
+    GUI Framework: Java Swing
 
-### 1. Encapsulation
-All data fields (ID, Name, Salary) are marked `private`. Access is strictly controlled via public constructors and getter/setter methods to prevent unauthorized data corruption.
+    Database: SQLite (Relational Persistence)
 
-### 2. Inheritance
-We implemented a hierarchical tree where `FullTimeEmployee`, `PartTimeEmployee`, and `Intern` inherit core attributes from the `Employee` base class, promoting code reuse.
+    Logic Architecture: Object-Oriented Programming (OOP)
 
-### 3. Polymorphism
-The system treats all staff as `Employee` objects but dynamically executes the specific `calculateSalary()` logic of the subclass at runtime (Dynamic Binding).
+4. Technical Features & Optimization
+4.1 High-Performance Search & Indexing
 
-### 4. Abstraction
-We used **Interfaces** (like `Payable`) and **Abstract Classes** (like `Employee`) to define "what" the system does while hiding the "how" (complex math or SQL queries) from the end-user.
+To ensure that search results remain instantaneous even as the database grows to hold extensive entries, a database index was implemented on the name column. This offloads the heavy lifting of sorting and searching to the SQLite engine rather than the Java application memory.
+Java
 
-### 5. Aggregation
-The `Employee` class maintains a "Has-A" relationship with `Address` and `Department`. This modular design allows these components to exist independently.
+// Performance Index: Created during initialization to speed up name-based queries
+String indexSql = "CREATE INDEX IF NOT EXISTS idx_name ON employees(name)";
+conn.createStatement().execute(indexSql);
 
----
+// Optimized Search Query with Database-Level Sorting
+@Override
+public List<Employee> search(String query) {
+    String sql = "SELECT * FROM employees WHERE id = ? OR name LIKE ? ORDER BY name ASC";
+    // Logic handles filtering and sorting within the database engine to maintain UI speed
+}
 
-## 📋 Class Directory
+4.2 Data Visibility Toggle & Resource Management
 
-| Component | Category | Description |
-| :--- | :--- | :--- |
-| `Payable` | **Interface** | Standardizes payroll calculation across the entire system. |
-| `Employee` | **Abstract Class** | The foundational blueprint for all staff types. |
-| `FullTimeEmployee` | **Subclass** | Implements fixed-rate monthly payroll logic. |
-| `PartTimeEmployee` | **Subclass** | Implements hourly-based payroll logic (Rate × Hours). |
-| `Intern` | **Subclass** | Implements stipend-based logic for temporary staff. |
-| `Address` | **Aggregation** | Encapsulates location data (Street, City). |
-| `EmployeeDAO` | **Interface** | Abstraction layer for database operations. |
-| `SQLiteEmployeeDAO` | **Implementation** | Handles JDBC communication and SQL execution for `ems.db`. |
-| `EmployeeManagementGUI` | **GUI** | Swing-based window for user interaction and data display. |
-| `Main` | **Entry Point** | Safely launches the GUI on the Event Dispatch Thread (EDT). |
+The system includes a toggle mechanism for the "Refresh Table" button. This is a deliberate memory management choice that allows users to clear the UI table, freeing up Java Virtual Machine (JVM) resources and reducing UI clutter during heavy data entry or retrieval tasks.
+Java
 
----
+private void toggleTable() {
+    if (btnShow.getText().equals("Hide Records")) {
+        model.setRowCount(0); // Explicitly clears the UI model to save memory
+        btnShow.setText("Refresh Table");
+        lblStatus.setText("Records hidden. Search to find an employee.");
+    } else {
+        refreshTable(); // Re-fetches data from the persistence layer
+    }
+}
 
-## 💾 Technical Environment
-*   **Database:** SQLite (Serverless, file-based persistence).
-*   **Driver:** JDBC (Java Database Connectivity).
-*   **Version Control:** `.gitignore` is configured to exclude compiled `.class` files and the local `ems.db` instance to ensure smooth collaboration.
+5. Comprehensive OOP Design and Principles
+5.1 Encapsulation
+
+The system maintains strict data security by hiding the internal state of objects:
+
+    Data Hiding: All fields in classes like Employee, Address, and Department are kept private.
+
+    Controlled Access: Access is only provided through public constructors and standardized getters/setters, ensuring that data validation occurs before any field is modified.
+
+Java
+
+public class Employee {
+    private String id;
+    private String name;
+    private double salary;
+
+    public String getName() { return name; }
+    public void setName(String name) { 
+        if(name != null && !name.isEmpty()) { this.name = name; } 
+    }
+}
+
+5.2 Inheritance & Generalization
+
+A hierarchical structure was implemented to maximize code reuse:
+
+    Base Class: The Employee abstract class defines shared attributes such as id, name, and department.
+
+    Specialization: Subclasses like FullTimeEmployee and PartTimeEmployee extend this base, inheriting core logic while adding specialized fields.
+
+Java
+
+public abstract class Employee implements Payable {
+    protected String id;
+    protected String name;
+    // Common logic for all employees
+}
+
+public class PartTimeEmployee extends Employee {
+    private double hourlyRate;
+    private int hoursWorked;
+    // Specific logic for part-time staff
+}
+
+5.3 Polymorphism (Dynamic Binding)
+
+Polymorphism allows the system to process a variety of employee types through a single interface:
+
+    Method Overriding: Each subclass provides a unique implementation of calculateSalary().
+
+    Runtime Execution: The application stores diverse objects in a List<Employee>. At runtime, the JVM automatically invokes the correct salary logic based on the actual object type.
+
+Java
+
+private Employee mapResultSetToEmployee(ResultSet rs) throws SQLException {
+    String type = rs.getString("type");
+    // Polymorphic instantiation based on the database 'type' value
+    if ("Part-Time".equalsIgnoreCase(type)) {
+        return new PartTimeEmployee(rs.getString("id"), rs.getString("name"), null, d, rs.getDouble("salary"), 0);
+    } else if ("Intern".equalsIgnoreCase(type)) {
+        return new Intern(rs.getString("id"), rs.getString("name"), null, d, rs.getDouble("salary"));
+    } else {
+        return new FullTimeEmployee(rs.getString("id"), rs.getString("name"), null, d, rs.getDouble("salary"));
+    }
+}
+
+5.4 Abstraction & Interfaces
+
+    Payable Interface: This defines the contract for any entity that receives a salary, ensuring consistent behavior across the application.
+
+    Abstract Classes: The Employee class is marked abstract to prevent the creation of a "generic" employee, enforcing the rule that every record must have a specific category.
+
+Java
+
+public interface Payable {
+    double calculateSalary();
+}
+
+5.5 Aggregation
+
+The design uses aggregation to represent "has-a" relationships. An Employee contains references to Address and Department objects. This modularity allows a Department to exist independently of an employee, reflecting real-world business logic.
+6. Advanced Java Implementation
+6.1 Graphical User Interface (GUI)
+
+The interface is built using Java Swing with a focus on Event-Driven Programming:
+
+    User Feedback: ActionListeners capture clicks and provide real-time updates via status labels.
+
+    Layout Management: The system uses Layout Managers rather than absolute positioning, ensuring the GUI remains consistent across different operating systems.
+
+6.2 Robust Exception Handling
+
+Defensive programming ensures the application does not crash during database or logic errors:
+
+    Try-With-Resources: Used in the DAO layer to ensure database connections are automatically closed, preventing memory leaks.
+
+    Graceful Degradation: When a database error occurs (like a duplicate ID), the system catches the SQLException and alerts the user via a dialog box instead of terminating the program.
+
+Java
+
+try (Connection conn = DriverManager.getConnection(URL);
+     PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    // Database operations here
+} catch (SQLException e) {
+    lblStatus.setText("Database Error: " + e.getMessage());
+    e.printStackTrace();
+}
+
+6.3 File and I/O (Input/Output)
+
+The system manages its own environment setup:
+
+    Automated Setup: Upon launch, the java.io.File class checks for the existence of the /db directory. If missing, the application automatically creates the directory and initializes the database file.
+
+    Relational Persistence: While using SQL, the system manages the physical database file on the disk, ensuring that all entries are preserved permanently.
+
+7. Package Structure
+
+The code is organized into modular packages to ensure a clean Separation of Concerns:
+
+    app: Main entry point.
+
+    dao: Persistence and database logic.
+
+    gui: User interface and event handling.
+
+    employee: Core business models.
+
+    interfaces: Contractual definitions.
+
+8. Database Design & Integrity
+
+    Schema: id (PK), name (Indexed), type, dept, salary.
+
+    Security: The use of Prepared Statements prevents SQL Injection attacks and ensures that data types are handled correctly during extensive data entry.
+
+9. Key Strengths
+
+    Scalability: Optimized for high-capacity data management without performance loss.
+
+    Robustness: Effective use of Exception Handling to manage runtime errors gracefully.
+
+    Modular Architecture: High adherence to OOP principles, making the system easy to maintain and expand.
